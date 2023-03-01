@@ -6,6 +6,7 @@ use bevy::{
     // sprite::collide_aabb::{collide, Collision},
     // sprite::MaterialMesh2dBundle,
     time::{FixedTimestep, FixedTimesteps},
+    window::PresentMode,
     winit::WinitSettings,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -16,8 +17,8 @@ const TIME_STEP: f32 = 1.0 / 60.0;
 
 const BRICK_SIZE: Vec2 = Vec2::new(10., 10.);
 
-const N_BRICKS_X: usize = 100;
-const N_BRICKS_Y: usize = 100;
+const N_BRICKS_X: usize = 80;
+const N_BRICKS_Y: usize = 80;
 
 const GAP_BETWEEN_BRICKS: f32 = 1.0;
 
@@ -31,8 +32,17 @@ struct FixedUpdateStage;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        // .add_plugin(WorldInspectorPlugin)
+        // .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                title: "Conway's Game of Life".to_string(),
+                width: 1280.,
+                height: 900.,
+                present_mode: PresentMode::AutoVsync,
+                ..default()
+            },
+            ..default()
+        }))
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         // .insert_resource(WinitSettings::desktop_app())
         .insert_resource(Board::new(N_BRICKS_X, N_BRICKS_Y))
