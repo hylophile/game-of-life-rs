@@ -332,16 +332,16 @@ fn setup(
 }
 
 fn play_pause_system(
-    query: Query<(&Interaction, &Children), (Changed<Interaction>, With<PlayPauseButton>)>,
+    mut query: Query<
+        (&Interaction, &mut BackgroundColor, &Children),
+        (Changed<Interaction>, With<PlayPauseButton>),
+    >,
     mut text_query: Query<&mut Text>,
     mut playing: ResMut<Playing>,
 ) {
-    // let interaction = query;
-    // match *interaction {}
-    // dbg!(query);
-    for (interaction, children) in query.iter() {
+    for (interaction, mut color, children) in &mut query {
         let mut text = text_query.get_mut(children[0]).unwrap();
-        match interaction {
+        match *interaction {
             Interaction::Clicked => {
                 let currently_playing = playing.0;
                 if currently_playing {
@@ -352,7 +352,8 @@ fn play_pause_system(
                     *playing = Playing(true);
                 }
             }
-            _ => (),
+            Interaction::Hovered => *color = Color::rgb(0.7, 0.7, 0.7).into(),
+            Interaction::None => *color = DEAD_COLOR.into(),
         }
     }
 }
