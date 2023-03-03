@@ -15,12 +15,12 @@ use std::fmt;
 // Defines the amount of time that should elapse between each physics step.
 const TIME_STEP: f32 = 1.0 / 60.0;
 
-const BRICK_SIZE: Vec2 = Vec2::new(10., 10.);
+const CELL_SIZE: Vec2 = Vec2::new(10., 10.);
 
-const N_BRICKS_X: usize = 80;
-const N_BRICKS_Y: usize = 80;
+const N_CELLS_X: usize = 80;
+const N_CELLS_Y: usize = 80;
 
-const GAP_BETWEEN_BRICKS: f32 = 1.0;
+const GAP_BETWEEN_CELLS: f32 = 1.0;
 
 const BACKGROUND_COLOR: Color = Color::rgb(0.5, 0.5, 0.5);
 const ALIVE_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
@@ -45,7 +45,7 @@ fn main() {
         }))
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         // .insert_resource(WinitSettings::desktop_app())
-        .insert_resource(Board::new(N_BRICKS_X, N_BRICKS_Y))
+        .insert_resource(Board::new(N_CELLS_X, N_CELLS_Y))
         .insert_resource(Playing(false))
         .add_startup_system(setup)
         .add_system(button_system)
@@ -55,7 +55,7 @@ fn main() {
             FixedUpdateStage,
             SystemStage::parallel()
                 .with_run_criteria(
-                    FixedTimestep::step(1. / 60.)
+                    FixedTimestep::step(1. / 15.)
                         // labels are optional. they provide a way to access the current
                         // FixedTimestep state from within a system
                         .with_label("my_time"),
@@ -105,23 +105,6 @@ fn fixed_update(
         }
         // println!("{}", *board)
     }
-    // info!(
-    //     "time since last fixed_update: {}\n",
-    //     time.raw_elapsed_seconds() - *last_time
-    // );
-
-    // let state = fixed_timesteps.get("my_time").unwrap();
-
-    // info!("fixed timestep: {}\n", 0.5);
-    // info!(
-    //     "time accrued toward next fixed_update: {}\n",
-    //     state.accumulator()
-    // );
-    // info!(
-    //     "time accrued toward next fixed_update (% of timestep): {}",
-    //     state.overstep_percentage()
-    // );
-    // *last_time = time.raw_elapsed_seconds();
 }
 
 #[derive(Component, Debug)]
@@ -145,7 +128,6 @@ struct Board {
 }
 
 impl fmt::Display for Board {
-    // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let tiles = self.tiles();
         for x in 0..self.width {
@@ -201,14 +183,12 @@ impl Tiles {
         match self.get(x, y) {
             true => {
                 if n < 2 || n > 3 {
-                    // self.set(x, y, false)
                     return false;
                 }
                 return true;
             }
             false => {
                 if n == 3 {
-                    // self.set(x, y, true)
                     return true;
                 }
                 return false;
@@ -275,24 +255,11 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
 
     let font = asset_server.load("fonts/agave-r.ttf");
-    // Bricks
-    // Negative scales result in flipped sprites / meshes,
-    // which is definitely not what we want here
-    assert!(BRICK_SIZE.x > 0.0);
-    assert!(BRICK_SIZE.y > 0.0);
+    assert!(CELL_SIZE.x > 0.0);
+    assert!(CELL_SIZE.y > 0.0);
 
-    // let total_width_of_bricks = (RIGHT_WALL - LEFT_WALL) - 2. * GAP_BETWEEN_BRICKS_AND_SIDES;
-    // // let bottom_edge_of_bricks = 0.0; //paddle_y + GAP_BETWEEN_PADDLE_AND_BRICKS;
-    // let bottom_edge_of_bricks = BOTTOM_WALL + GAP_BETWEEN_BRICKS_AND_SIDES;
-    // let total_height_of_bricks = TOP_WALL - BOTTOM_WALL - GAP_BETWEEN_BRICKS_AND_SIDES;
-
-    // assert!(total_width_of_bricks > 0.0);
-    // assert!(total_height_of_bricks > 0.0);
-
-    // Given the space available, compute how many rows and columns of bricks we can fit
-    let n_columns = N_BRICKS_X as usize; //(total_width_of_bricks / (BRICK_SIZE.x + GAP_BETWEEN_BRICKS)).floor() as usize;
-    let n_rows = N_BRICKS_Y as usize; //(total_height_of_bricks / (BRICK_SIZE.y + GAP_BETWEEN_BRICKS)).floor() as usize;
-                                      // let n_vertical_gaps = n_columns - 1;
+    let n_columns = N_CELLS_X as usize;
+    let n_rows = N_CELLS_Y as usize;
 
     commands
         .spawn((
@@ -312,11 +279,6 @@ fn setup(
                     ..default()
                 },
                 background_color: DEAD_COLOR.into(),
-                // transform: Transform {
-                //     translation: brick_position.extend(0.0),
-                //     // scale: Vec3::new(BRICK_SIZE.x, BRICK_SIZE.y, 1.0),
-                //     ..default()
-                // },
                 ..default()
             },
             PlayPauseButton,
@@ -334,31 +296,26 @@ fn setup(
 
     for row in 0..n_rows {
         for column in 0..n_columns {
-            let brick_position = Vec2::new(
-                100.0 + column as f32 * (BRICK_SIZE.x + GAP_BETWEEN_BRICKS),
+            let cell_position = Vec2::new(
+                100.0 + column as f32 * (CELL_SIZE.x + GAP_BETWEEN_CELLS),
                 // offset_y +
-                10.0 + row as f32 * (BRICK_SIZE.y + GAP_BETWEEN_BRICKS),
+                10.0 + row as f32 * (CELL_SIZE.y + GAP_BETWEEN_CELLS),
             );
 
             let entity = commands
                 .spawn((
                     ButtonBundle {
                         style: Style {
-                            size: Size::new(Val::Px(BRICK_SIZE.x), Val::Px(BRICK_SIZE.y)),
+                            size: Size::new(Val::Px(CELL_SIZE.x), Val::Px(CELL_SIZE.y)),
                             position_type: PositionType::Absolute,
                             position: UiRect {
-                                left: Val::Px(brick_position.x),
-                                top: Val::Px(brick_position.y),
+                                left: Val::Px(cell_position.x),
+                                top: Val::Px(cell_position.y),
                                 ..default()
                             },
                             ..default()
                         },
                         background_color: DEAD_COLOR.into(),
-                        // transform: Transform {
-                        //     translation: brick_position.extend(0.0),
-                        //     // scale: Vec3::new(BRICK_SIZE.x, BRICK_SIZE.y, 1.0),
-                        //     ..default()
-                        // },
                         ..default()
                     },
                     Cell {
@@ -412,13 +369,11 @@ fn button_system(
         match *interaction {
             Interaction::Clicked => {
                 board.set(cell.pos_x, cell.pos_y, !cell.alive);
-                // println!("{}", *board);
                 toggle_cell(cell, color);
             }
             Interaction::Hovered => {
                 if buttons.pressed(MouseButton::Left) {
                     board.set(cell.pos_x, cell.pos_y, !cell.alive);
-                    // println!("{}", *board);
                     toggle_cell(cell, color);
                 } else if !cell.alive {
                     *color = HOVER_COLOR.into();
