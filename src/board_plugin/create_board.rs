@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::board_plugin::{Cell, DEAD_COLOR, N_CELLS_X, N_CELLS_Y};
+use crate::board_plugin::{Cell, DEAD_COLOR};
 
 use super::{board::Board, CELL_SIZE, GAP_BETWEEN_CELLS};
 
@@ -11,15 +11,11 @@ pub fn spawn_board(
     // mut materials: ResMut<Assets<ColorMaterial>>,
     // asset_server: Res<AssetServer>,
 ) {
-    let n_columns = N_CELLS_X as usize;
-    let n_rows = N_CELLS_Y as usize;
-
-    for row in 0..n_rows {
-        for column in 0..n_columns {
+    for y in 0..board.height {
+        for x in 0..board.width {
             let cell_position = Vec2::new(
-                100.0 + column as f32 * (CELL_SIZE.x + GAP_BETWEEN_CELLS),
-                // offset_y +
-                10.0 + row as f32 * (CELL_SIZE.y + GAP_BETWEEN_CELLS),
+                100.0 + x as f32 * (CELL_SIZE.x + GAP_BETWEEN_CELLS),
+                10.0 + y as f32 * (CELL_SIZE.y + GAP_BETWEEN_CELLS),
             );
 
             let entity = commands
@@ -40,12 +36,12 @@ pub fn spawn_board(
                     },
                     Cell {
                         alive: false,
-                        pos_x: row,
-                        pos_y: column,
+                        pos_x: x,
+                        pos_y: y,
                     },
                 ))
                 .id();
-            board.set_entity(row, column, entity);
+            board.set_entity(x, y, entity);
             // println!("{}", entity);
         }
     }
