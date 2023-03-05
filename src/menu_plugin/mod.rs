@@ -10,12 +10,17 @@ struct PlayPauseButton;
 #[derive(Component)]
 struct NoiseButton;
 
+#[derive(Component)]
+struct ClearButton;
+
 #[derive(Resource, Debug)]
 pub struct Config {
     pub playing: bool,
 }
 
 pub struct AddNoiseEvent;
+
+pub struct ClearEvent;
 
 pub struct MenuPlugin {}
 
@@ -24,8 +29,10 @@ impl Plugin for MenuPlugin {
         app.add_startup_system(setup)
             .insert_resource(Config { playing: false })
             .add_event::<AddNoiseEvent>()
+            .add_event::<ClearEvent>()
             .add_system(play_pause_system)
-            .add_system(add_noise_button_system);
+            .add_system(add_noise_button_system)
+            .add_system(clear_button_system);
     }
 }
 
@@ -75,9 +82,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         top: Val::Px(50.0),
                         ..default()
                     },
-                    // horizontally center child text
                     justify_content: JustifyContent::Center,
-                    // vertically center child text
                     align_items: AlignItems::Center,
                     ..default()
                 },
@@ -89,6 +94,37 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
                 "Noise",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 18.0,
+                    color: TEXT_COLOR,
+                },
+            ));
+        });
+
+    commands
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    size: Size::new(Val::Px(80.0), Val::Px(30.0)),
+                    position_type: PositionType::Absolute,
+                    position: UiRect {
+                        left: Val::Px(10.0),
+                        top: Val::Px(90.0),
+                        ..default()
+                    },
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                background_color: BUTTON_BG_COLOR.into(),
+                ..default()
+            },
+            ClearButton,
+        ))
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "Clear",
                 TextStyle {
                     font: font.clone(),
                     font_size: 18.0,
@@ -136,6 +172,24 @@ fn add_noise_button_system(
         match *interaction {
             Interaction::Clicked => {
                 ev_add_noise.send(AddNoiseEvent);
+            }
+            Interaction::Hovered => *color = BUTTON_HOVER_BG_COLOR.into(),
+            Interaction::None => *color = BUTTON_BG_COLOR.into(),
+        }
+    }
+}
+
+fn clear_button_system(
+    mut query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<ClearButton>),
+    >,
+    mut ev_clear: EventWriter<ClearEvent>,
+) {
+    for (interaction, mut color) in &mut query {
+        match *interaction {
+            Interaction::Clicked => {
+                ev_clear.send(ClearEvent);
             }
             Interaction::Hovered => *color = BUTTON_HOVER_BG_COLOR.into(),
             Interaction::None => *color = BUTTON_BG_COLOR.into(),
