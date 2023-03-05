@@ -1,11 +1,14 @@
 use bevy::{prelude::*, time::FixedTimestep};
+use rand::Rng;
+
+use crate::menu_plugin::AddNoiseEvent;
 
 use self::{
     board::Board, create_board::spawn_board, draw_on_board::draw_on_board_system,
     update_board::update_board_system,
 };
 
-mod board;
+pub mod board;
 mod create_board;
 mod draw_on_board;
 mod update_board;
@@ -15,10 +18,11 @@ pub const ALIVE_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
 pub const DEAD_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 pub const HOVER_COLOR: Color = Color::rgb(0.45, 0.45, 0.45);
 
-const TIME_STEP: f64 = 1.0 / 15.0;
-const N_CELLS_X: usize = 80;
-const N_CELLS_Y: usize = 80;
-const CELL_SIZE: Vec2 = Vec2::new(5., 5.);
+const TIME_STEP: f64 = 1.0 / 20.0;
+const N_CELLS_X: usize = 200;
+const N_CELLS_Y: usize = 200;
+
+const CELL_SIZE: Vec2 = Vec2::new(4., 4.);
 const GAP_BETWEEN_CELLS: f32 = 0.0;
 
 #[derive(Component, Debug)]
@@ -40,6 +44,7 @@ impl Plugin for BoardPlugin {
             .insert_resource(Board::new(N_CELLS_X, N_CELLS_Y))
             .add_startup_system(spawn_board)
             .add_system(draw_on_board_system)
+            .add_system(add_noise_system)
             .add_stage_after(
                 CoreStage::Update,
                 FixedUpdateStage,
@@ -47,5 +52,32 @@ impl Plugin for BoardPlugin {
                     .with_run_criteria(FixedTimestep::step(TIME_STEP).with_label("my_time"))
                     .with_system(update_board_system),
             );
+    }
+}
+
+fn add_noise_system(
+    mut ev_add_noise: EventReader<AddNoiseEvent>,
+    mut board: ResMut<Board>,
+    mut query: Query<&mut BackgroundColor, With<Cell>>,
+) {
+    for _ev in ev_add_noise.iter() {
+        let mut rng = rand::thread_rng();
+
+        for x in 0..board.width {
+            for y in 0..board.height {
+                let b: bool = rng.gen();
+                board.set_old(x, y, b);
+                let e = board.get_entity(x, y);
+                let mut color: Mut<BackgroundColor> = query.get_mut(e).unwrap();
+                match b {
+                    true => {
+                        *color = ALIVE_COLOR.into();
+                    }
+                    false => {
+                        *color = DEAD_COLOR.into();
+                    }
+                }
+            }
+        }
     }
 }

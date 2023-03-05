@@ -7,10 +7,15 @@ const BUTTON_HOVER_BG_COLOR: Color = Color::rgb(0.7, 0.7, 0.7);
 #[derive(Component)]
 struct PlayPauseButton;
 
+#[derive(Component)]
+struct NoiseButton;
+
 #[derive(Resource, Debug)]
 pub struct Config {
     pub playing: bool,
 }
+
+pub struct AddNoiseEvent;
 
 pub struct MenuPlugin {}
 
@@ -18,7 +23,9 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .insert_resource(Config { playing: false })
-            .add_system(play_pause_system);
+            .add_event::<AddNoiseEvent>()
+            .add_system(play_pause_system)
+            .add_system(add_noise_button_system);
     }
 }
 
@@ -56,6 +63,39 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
             ));
         });
+
+    commands
+        .spawn((
+            ButtonBundle {
+                style: Style {
+                    size: Size::new(Val::Px(80.0), Val::Px(30.0)),
+                    position_type: PositionType::Absolute,
+                    position: UiRect {
+                        left: Val::Px(10.0),
+                        top: Val::Px(50.0),
+                        ..default()
+                    },
+                    // horizontally center child text
+                    justify_content: JustifyContent::Center,
+                    // vertically center child text
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                background_color: BUTTON_BG_COLOR.into(),
+                ..default()
+            },
+            NoiseButton,
+        ))
+        .with_children(|parent| {
+            parent.spawn(TextBundle::from_section(
+                "Noise",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 18.0,
+                    color: TEXT_COLOR,
+                },
+            ));
+        });
 }
 
 fn play_pause_system(
@@ -78,6 +118,24 @@ fn play_pause_system(
                     text.sections[0].value = "Pause".to_string();
                     *config = Config { playing: true };
                 }
+            }
+            Interaction::Hovered => *color = BUTTON_HOVER_BG_COLOR.into(),
+            Interaction::None => *color = BUTTON_BG_COLOR.into(),
+        }
+    }
+}
+
+fn add_noise_button_system(
+    mut query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<NoiseButton>),
+    >,
+    mut ev_add_noise: EventWriter<AddNoiseEvent>,
+) {
+    for (interaction, mut color) in &mut query {
+        match *interaction {
+            Interaction::Clicked => {
+                ev_add_noise.send(AddNoiseEvent);
             }
             Interaction::Hovered => *color = BUTTON_HOVER_BG_COLOR.into(),
             Interaction::None => *color = BUTTON_BG_COLOR.into(),
