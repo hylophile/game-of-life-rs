@@ -1,5 +1,5 @@
 use bevy::{prelude::*, time::FixedTimestep};
-use rand::Rng;
+use rand::distributions::{Distribution, Uniform};
 
 use crate::menu_plugin::AddNoiseEvent;
 
@@ -62,20 +62,16 @@ fn add_noise_system(
 ) {
     for _ev in ev_add_noise.iter() {
         let mut rng = rand::thread_rng();
+        let die = Uniform::from(1..20);
 
         for x in 0..board.width {
             for y in 0..board.height {
-                let b: bool = rng.gen();
-                board.set_old(x, y, b);
-                let e = board.get_entity(x, y);
-                let mut color: Mut<BackgroundColor> = query.get_mut(e).unwrap();
-                match b {
-                    true => {
-                        *color = ALIVE_COLOR.into();
-                    }
-                    false => {
-                        *color = DEAD_COLOR.into();
-                    }
+                let t = die.sample(&mut rng);
+                if t == 1 {
+                    board.set_old(x, y, true);
+                    let e = board.get_entity(x, y);
+                    let mut color: Mut<BackgroundColor> = query.get_mut(e).unwrap();
+                    *color = ALIVE_COLOR.into();
                 }
             }
         }
