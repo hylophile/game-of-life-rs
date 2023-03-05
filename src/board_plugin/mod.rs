@@ -18,6 +18,8 @@ pub const HOVER_COLOR: Color = Color::rgb(0.45, 0.45, 0.45);
 const TIME_STEP: f64 = 1.0 / 15.0;
 const N_CELLS_X: usize = 80;
 const N_CELLS_Y: usize = 80;
+const CELL_SIZE: Vec2 = Vec2::new(5., 5.);
+const GAP_BETWEEN_CELLS: f32 = 0.0;
 
 #[derive(Component, Debug)]
 pub struct Cell {

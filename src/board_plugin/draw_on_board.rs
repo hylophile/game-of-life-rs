@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{board::Board, ALIVE_COLOR, DEAD_COLOR, HOVER_COLOR, Cell};
+use super::{board::Board, Cell, ALIVE_COLOR, DEAD_COLOR, HOVER_COLOR};
 
 pub fn draw_on_board_system(
     mut interaction_query: Query<
@@ -13,12 +13,12 @@ pub fn draw_on_board_system(
     for (interaction, mut color, cell) in &mut interaction_query {
         match *interaction {
             Interaction::Clicked => {
-                board.set(cell.pos_x, cell.pos_y, !cell.alive);
+                board.set_old(cell.pos_x, cell.pos_y, !cell.alive);
                 toggle_cell(cell, color);
             }
             Interaction::Hovered => {
                 if buttons.pressed(MouseButton::Left) {
-                    board.set(cell.pos_x, cell.pos_y, !cell.alive);
+                    board.set_old(cell.pos_x, cell.pos_y, !cell.alive);
                     toggle_cell(cell, color);
                 } else if !cell.alive {
                     *color = HOVER_COLOR.into();

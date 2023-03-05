@@ -10,14 +10,12 @@ pub fn update_board_system(
     config: Res<Config>,
 ) {
     if config.playing {
-        let tiles = board.tiles();
-
         for x in 0..board.width {
             for y in 0..board.height {
-                let current_state = tiles.get(x, y);
-                let new_state = tiles.step_cell(x, y);
+                let current_state = board.get(x, y);
+                let new_state = board.step_cell(x, y);
+                board.set(x, y, new_state);
                 if current_state != new_state {
-                    board.set(x, y, new_state);
                     let e = board.get_entity(x, y);
                     let (mut color, mut cell): (Mut<BackgroundColor>, Mut<Cell>) =
                         query.get_mut(e).unwrap();
@@ -35,5 +33,6 @@ pub fn update_board_system(
                 }
             }
         }
+        board.step_board();
     }
 }

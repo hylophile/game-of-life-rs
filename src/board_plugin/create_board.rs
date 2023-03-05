@@ -2,10 +2,7 @@ use bevy::prelude::*;
 
 use crate::board_plugin::{Cell, DEAD_COLOR, N_CELLS_X, N_CELLS_Y};
 
-use super::board::Board;
-
-const CELL_SIZE: Vec2 = Vec2::new(10., 10.);
-const GAP_BETWEEN_CELLS: f32 = 1.0;
+use super::{board::Board, CELL_SIZE, GAP_BETWEEN_CELLS};
 
 pub fn spawn_board(
     mut commands: Commands,
